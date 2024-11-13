@@ -78,10 +78,10 @@ static void prefetchFromQueue(CacheSimulation *cache)
         {
             cache->prefetch_queue[i].prefetch_time = UINT64_MAX;
             // tomato: we want to prefetch here
-            uintptr_t aligned_address = /*tomato*/ 0;
+            uintptr_t aligned_address = cache->prefetch_queue[i].prefetch_addr & 0x3F;
 
-            uint8_t set = /*tomato*/ 0;
-            uint64_t tag = /*tomato*/ 0;
+            uint8_t set = (cache->prefetch_queue[i].prefetch_addr >> 6) & 0x3F;
+            uint64_t tag = cache->prefetch_queue[i].prefetch_addr >> 12;
             int i = 0;
             int block = 0;
             bool hit = false;
@@ -135,8 +135,8 @@ uint64_t cacheAddress(CacheSimulation *cache, uintptr_t address)
     // align the address to 64 bytes
     uintptr_t aligned_address = (address + 63) & ~uintptr_t(63);
 
-    uint8_t set = (aligned_address >> 6) & 0x3F;
-    uint64_t tag = aligned_address >> 12;
+    uint8_t set = (address >> 6) & 0x3F;
+    uint64_t tag = address >> 12;
     cache->reads++;
     bool hit = false;
     int i;
@@ -166,23 +166,29 @@ uint64_t cacheAddress(CacheSimulation *cache, uintptr_t address)
                 break;
             }
             /*tomato: for more sophisticated replacements modify here*/
-            switch(cache->policy){
-		    case cache->Policy::LRU:
+            //switch(cache->policy){
+		    if (cache->policy == cache->Policy::LRU){
 			if (cache->cache[set][j].last_access < min_time){
 				min_time = cache->cache[set][j].last_access;
 				i = j;
-			};
-		    case cache->Policy::Random:
+			}
+		    } else if (cache->policy == cache->Policy::Random){
 			i = rand() % 8;
-		    case cache->Policy::TreeLRU:
-			continue;
-			//Implement TreeLRU here
+			break;
+		    } else if (cache->policy == cache->Policy::TreeLRU){
+			//getting the index
+			int index = 0;
+			int previous_index;
+			for (int m = 0; m < 3; m++){
+			   previous_index = index;
+			   index = 2 * index + 1 + cache->replacement_policy[set].usage[index];
+                           cache->replacement_policy[set].usage[previous_index] = 1 - cache->replacement_policy[set].usage[previous_index];
+			}
+			i = index - 7;
+			break;
+		  }
 		    
-	    }
-            //if (/*tomato, hint: replacement */ true)
-            //{
-            //    i = j;
-            //}
+	    //}
         }
         /*tomato: we are getting the base pointer into the cache*/
         // tomato: dont forget the other modifications to the block
@@ -211,8 +217,8 @@ int writeCache(CacheSimulation *cache, uintptr_t address, int value)
     *(int *)address = value;
     // tomato: fill in the 0s.
     uintptr_t aligned_address = (address + 63) & ~uintptr_t(63);
-    uint8_t set = (aligned_address >> 6) & 0x3F;
-    uint64_t tag = aligned_address >> 12;
+    uint8_t set = (address >> 6) & 0x3F;
+    uint64_t tag = address >> 12;
     int i = 0;
     for (; i < 8; i++)
     {

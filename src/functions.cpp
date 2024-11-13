@@ -28,7 +28,7 @@ void convolution(int dim, int_cached_buffer &src, int_cached_buffer &ker, int_ca
     // example: you can initialize another buffer like this.
     int_cached_buffer kernValues;
     initBuffer(kernValues, 64);
-    int block_size = 8;
+    int block_size = 4;
     // tomato: optimize convolution for more cache hits.
     for (i = 0; i < dim - 8 + 1; i+= block_size)
 	   for (j = 0; j < dim - 8 + 1; j+= block_size){
@@ -67,16 +67,18 @@ void matrixMultiplication(int dim, int_cached_buffer &src, int_cached_buffer &sr
     int_cache_dependent res;
     // tomato: optimize matrix multiplication for more cache hits.
     int block_size = 8;
-    for (i = 0; i < dim; i+= block_size)
-	   for (j = 0; j < dim; j+= block_size)
-		  for (int ii = i; ii < std::min(i + block_size, dim);  ii++)
-			 for (int jj = j; jj < std::min(j + block_size, dim); jj++){
-				res = dst[jj * dim + ii] = 0;
-     				for (k = 0; k < dim; k++){
+    for (i = 0; i < dim; i+= block_size){
+	   for (j = 0; j < dim; j+= block_size){
+		  for (int ii = i; ii < std::min(i + block_size, dim); ii++){
+			for (int jj = j; jj < std::min(j + block_size, dim); jj++){
+				res = 0;
+				for (k = 0; k < dim; k++){
 					res += src[jj * dim + k] * src2[ii + k * dim];
+				}
 				dst [jj * dim + ii] = res;
-			 }
-	   }
-
+			}
+		  }
+	    }
+    }
 
 }

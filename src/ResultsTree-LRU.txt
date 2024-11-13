@@ -1,0 +1,36 @@
+Base Convolution Stats:
+Hit rate: 0.99014
+Miss rate: 0.00986001
+Total time: 7009569
+Number of usefull prefetches: tomato
+Number of wasted prefetches: tomato
+Ratio of wasted/all prefetches : tomato
+Ratio of prefetched hits/all hits : tomato
+=======================
+Your Convolution Stats:
+Hit rate: 0.993919
+Miss rate: 0.00608117
+Total time: 869163
+Number of usefull prefetches: tomato
+Number of wasted prefetches: tomato
+Ratio of wasted/all prefetches : tomato
+Ratio of prefetched hits/all hits : tomato
+=======================
+Base Matrix Multiplication Stats:
+Hit rate: 0.72585
+Miss rate: 0.27415
+Total time: 336855040
+Number of usefull prefetches: tomato
+Number of wasted prefetches: tomato
+Ratio of wasted/all prefetches : tomato
+Ratio of prefetched hits/all hits : tomato
+=================================
+Your Matrix Multiplication Stats:
+Hit rate: 0.493287
+Miss rate: 0.506713
+Total time: 1310720
+Number of usefull prefetches: tomato
+Number of wasted prefetches: tomato
+Ratio of wasted/all prefetches : tomato
+Ratio of prefetched hits/all hits : tomato
+=================================

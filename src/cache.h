@@ -28,7 +28,7 @@ struct ReplacementPolicy
     // tomato: replacement policy bits will be here
     // you can check them by replacement_policy[set].your_bits
     // next line is a suggestion about how you can store bits for LRU
-    uint8_t usage[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    uint8_t usage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 };
 
 struct PrefetchRequest
@@ -106,7 +106,7 @@ struct CacheSimulation
 	TreeLRU,
         // tomato: Add your replacement policy here
     };
-    Policy policy = LRU;
+    Policy policy;
     ReplacementPolicy replacement_policy[64] = {};
     PrefetchRequest prefetch_queue[32] = {};
     Prefetcher prefetcher;

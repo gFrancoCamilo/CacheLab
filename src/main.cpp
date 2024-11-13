@@ -1,9 +1,24 @@
 #include "cache.h"
 #include "common.h"
 #include <iostream>
+#include <string>
 
 int main(int args, char **argv)
 {
+    registerPolicy(CacheSimulation::Policy::LRU);
+    if (args > 1){
+        std::string policy = argv[1];
+	if (policy == "LRU"){
+            registerPolicy(CacheSimulation::Policy::LRU);
+	} else if (policy == "Random"){
+            registerPolicy(CacheSimulation::Policy::Random);
+	} else if (policy == "Tree-LRU"){
+            registerPolicy(CacheSimulation::Policy::TreeLRU);
+	} else {
+            fprintf(stderr, "Option not available\n");
+	    exit(1);
+	}
+    }
     initCache();
     matrix_mult_args ma;
     convolution_args ca;
