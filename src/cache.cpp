@@ -22,6 +22,8 @@ static void initCache(CacheSimulation *cache)
         set[0].valid = false;
         set[1].tag = 0;
         set[1].valid = false;
+	set[0].last_access = 0;
+	set[1].last_access = 0;
     }
     for (int i = 0; i < 32; i++)
     {
@@ -131,10 +133,10 @@ uint64_t cacheAddress(CacheSimulation *cache, uintptr_t address)
         }
     }
     // align the address to 64 bytes
-    uintptr_t aligned_address = /*tomato*/ 0;
+    uintptr_t aligned_address = (address + 63) & ~uintptr_t(63);
 
-    uint8_t set = /*tomato*/ 0;
-    uint64_t tag = /*tomato*/ 0;
+    uint8_t set = (aligned_address >> 6) & 0x3F;
+    uint64_t tag = aligned_address >> 12;
     cache->reads++;
     bool hit = false;
     int i;
@@ -142,7 +144,8 @@ uint64_t cacheAddress(CacheSimulation *cache, uintptr_t address)
     // Hint: 8 is associativity.
     for (i = 0; i < 8; i++)
     {
-        if (/*tomato*/ false)
+        if (cache->cache[set][i].valid &&
+            cache->cache[set][i].tag == tag)
         {
             hit = true;
             cache->hits++;
@@ -154,19 +157,32 @@ uint64_t cacheAddress(CacheSimulation *cache, uintptr_t address)
         cache->misses++;
         access_finishes = cache->current_time + 20;
         i = 0;
+	uint64_t min_time = UINT64_MAX;
         for (int j = 0; j < 8; j++)
         {
-            if (/*tomato*/ false)
+            if (cache->cache[set][j].valid == false)
             {
                 i = j;
                 break;
             }
             /*tomato: for more sophisticated replacements modify here*/
-            // switch(cache->policy)?
-            if (/*tomato, hint: replacement */ true)
-            {
-                i = j;
-            }
+            switch(cache->policy){
+		    case cache->Policy::LRU:
+			if (cache->cache[set][j].last_access < min_time){
+				min_time = cache->cache[set][j].last_access;
+				i = j;
+			};
+		    case cache->Policy::Random:
+			i = rand() % 8;
+		    case cache->Policy::TreeLRU:
+			continue;
+			//Implement TreeLRU here
+		    
+	    }
+            //if (/*tomato, hint: replacement */ true)
+            //{
+            //    i = j;
+            //}
         }
         /*tomato: we are getting the base pointer into the cache*/
         // tomato: dont forget the other modifications to the block
@@ -174,14 +190,18 @@ uint64_t cacheAddress(CacheSimulation *cache, uintptr_t address)
         for (int j = 0; j < 64; j++)
         {
             // tomato: copy here
+            cache->cache[set][i].data[j] = base_pointer[j];
         }
         // tomato: we just used this so maybe replacement policy cares about this.
+        cache->cache[set][i].valid = true;
+        cache->cache[set][i].tag = tag;
     }
     else
     {
         access_finishes = cache->current_time + 1;
         // tomato: we just used this so maybe replacement policy cares about this.
     }
+    cache->cache[set][i].last_access = cache->current_time;
     return access_finishes;
 }
 
@@ -189,17 +209,19 @@ int writeCache(CacheSimulation *cache, uintptr_t address, int value)
 {
     // writethrough
     *(int *)address = value;
-    // align the address to 64 bytes
     // tomato: fill in the 0s.
-    uintptr_t aligned_address = 0;
-    uint8_t set = 0;
-    uint64_t tag = 0;
+    uintptr_t aligned_address = (address + 63) & ~uintptr_t(63);
+    uint8_t set = (aligned_address >> 6) & 0x3F;
+    uint64_t tag = aligned_address >> 12;
     int i = 0;
     for (; i < 8; i++)
     {
-        if (/*tomato when do we write*/ false)
+        if (cache->cache[set][i].valid &&
+            cache->cache[set][i].tag == tag)
         {
             // tomato: write to cache
+            cache->cache[set][i].data[aligned_address & 0x3F] = value;
+	    cache->cache[set][i].last_access = cache->current_time;
             return value;
         }
     }
